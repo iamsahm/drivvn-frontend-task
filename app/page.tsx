@@ -22,7 +22,6 @@ export default function Page() {
 
     return (
         <>
-            <h1>{deckId}</h1>
             <Game deckId={deckId} />
         </>
     );
