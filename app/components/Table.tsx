@@ -10,7 +10,7 @@ interface TableProps {
 
 const Table: React.FC<TableProps> = ({ leftCard, rightCard }) => {
     return (
-        <div>
+        <div className="table" data-testid="table">
             <img
                 src={leftCard.image}
                 alt={`${leftCard.value} of ${leftCard.suit}`}

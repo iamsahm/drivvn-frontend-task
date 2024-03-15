@@ -28,6 +28,11 @@ describe("Table", () => {
             suit: "SPADES",
         },
     ];
+    it("renders the Table component", () => {
+        render(<Table leftCard={cards[0]} rightCard={cards[1]} />);
+        const table = screen.getByTestId("table");
+        expect(table).toBeInTheDocument();
+    });
     it("renders two images", () => {
         render(<Table leftCard={cards[0]} rightCard={cards[1]} />);
 
