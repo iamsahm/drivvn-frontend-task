@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Card } from "./card";
 import Table from "./Table";
+import "./Game.css";
 
 interface GameProps {
     deckId: string | null;
@@ -50,12 +51,12 @@ const Game: React.FC<GameProps> = ({ deckId }) => {
     }
 
     return (
-        <div data-testid="game">
+        <div data-testid="game" className="game">
+            {snapValue && <p>SNAP VALUE!</p>}
+            {snapSuit && <p>SNAP SUIT!</p>}
             <Table leftCard={oldCard} rightCard={newCard} />
-            {snapValue && <p>Snap Value!</p>}
-            {snapSuit && <p>Snap Suit!</p>}
             <button data-testid="drawButton" onClick={drawCard}>
-                Draw a card
+                Draw card
             </button>
         </div>
     );

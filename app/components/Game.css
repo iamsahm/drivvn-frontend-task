@@ -1,0 +1,33 @@
+.game {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+}
+
+p {
+    font-size: 20px;
+    font-weight: bold;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+button {
+    font-size: 20px;
+    font-weight: bold;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    padding: 10px 20px;
+    margin: 0 auto;
+    border-radius: 5px;
+    background-color: #008cff;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.table {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-evenly;
+    margin-top: 20px;
+}
