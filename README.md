@@ -3,6 +3,8 @@
 The task was briefed as detailed in [brief_and_plan.md](brief_and_plan.md). I've added comments to that file to explain my thought process, planning and the decisions I made.
 This is my first time using TypeScript, I would love feedback on how I can improve my use of it!
 
+I have continued development on another branch, outside the time window alloted for the task. You can find it in the 'extension' branch.
+
 ## Running the app
 
 This app was created using the Next.js framework. Install the dependencies and run it using the following commands:
