@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card } from "./card";
 import SnapStatus from "./SnapStatus";
 import Table from "./Table";
@@ -78,12 +78,8 @@ const Game: React.FC<GameProps> = ({ deckId }) => {
             const data = await response.json();
             if (data.success) {
                 const nextCard = data.cards[0];
-                setCardsDrawn((cardsDrawn) => [...cardsDrawn, nextCard]);
-                setGameOver(cardsDrawn.length + 1 === 52);
                 setOldCard(newCard);
                 setNewCard(gameOver ? placeHolderCard : nextCard);
-                setSnapValue(isSnapValue(newCard, nextCard));
-                setSnapSuit(isSnapSuit(newCard, nextCard));
             } else {
                 throw new Error(
                     "There's been an error, please refresh the page and try again."
@@ -95,6 +91,15 @@ const Game: React.FC<GameProps> = ({ deckId }) => {
             setIsFetching(false);
         }
     }
+
+    useEffect(() => {
+        if (newCard !== placeHolderCard) {
+            setCardsDrawn((cardsDrawn) => [...cardsDrawn, newCard]);
+            setGameOver(cardsDrawn.length + 1 === 52);
+            setSnapValue(isSnapValue(oldCard, newCard));
+            setSnapSuit(isSnapSuit(oldCard, newCard));
+        }
+    }, [newCard]);
 
     function isSnapValue(card1: Card, card2: Card): boolean {
         if (card1.value === card2.value) {
