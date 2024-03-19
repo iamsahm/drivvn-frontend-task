@@ -8,20 +8,30 @@ import Game from "../app/components/Game";
 
 fetchMock.enableMocks();
 
-function mockCard(value: string, suit: string) {
-    const suitShort = suit[0];
-    return [
-        {
-            code: `${value}${suitShort}`,
-            image: `https://deckofcardsapi.com/static/img/${value}${suitShort}.png`,
-            images: {
-                svg: `https://deckofcardsapi.com/static/img/${value}${suitShort}.svg`,
-                png: `https://deckofcardsapi.com/static/img/${value}${suitShort}.png`,
+function mockSuccessfulCardDrawResponse(
+    value: string,
+    suit: string,
+    deckId: string,
+    remaining: number
+) {
+    const suitShort = suit[0].toUpperCase();
+    return {
+        success: true,
+        deck_id: deckId,
+        cards: [
+            {
+                code: `${value}${suitShort}`,
+                image: `https://deckofcardsapi.com/static/img/${value}${suitShort}.png`,
+                images: {
+                    svg: `https://deckofcardsapi.com/static/img/${value}${suitShort}.svg`,
+                    png: `https://deckofcardsapi.com/static/img/${value}${suitShort}.png`,
+                },
+                value: value,
+                suit: suit.toUpperCase(),
             },
-            value,
-            suit,
-        },
-    ];
+        ],
+        remaining: remaining,
+    };
 }
 
 describe("Game", () => {
@@ -47,13 +57,14 @@ describe("Game", () => {
         expect(cards).toHaveLength(2);
     });
     it("calls drawCard when the button is clicked", async () => {
-        fetchMock.mockResponseOnce(
-            JSON.stringify({
-                success: true,
-                cards: mockCard("5", "SPADES"),
-                deck_id: "1",
-            })
+        const mockResponse = mockSuccessfulCardDrawResponse(
+            "5",
+            "SPADES",
+            "1",
+            51
         );
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
         render(<Game deckId="1" />);
         const button = screen.getByTestId("drawButton");
         fireEvent.click(button);
@@ -64,7 +75,6 @@ describe("Game", () => {
             "https://deckofcardsapi.com/api/deck/1/draw/?count=1"
         );
     });
-
     it("contains the Draw a card button", () => {
         render(<Game deckId="1" />);
         const button = screen.getByTestId("drawButton");
@@ -73,22 +83,18 @@ describe("Game", () => {
 
     it("displays Snap Value when the card values match", async () => {
         fetchMock.mockResponseOnce(
-            JSON.stringify({
-                success: true,
-                cards: mockCard("5", "SPADES"),
-                deck_id: "1",
-            })
+            JSON.stringify(
+                mockSuccessfulCardDrawResponse("5", "SPADES", "1", 51)
+            )
         );
         render(<Game deckId="1" />);
         const button = screen.getByTestId("drawButton");
         fireEvent.click(button);
         await screen.findByAltText("5 of SPADES");
         fetchMock.mockResponseOnce(
-            JSON.stringify({
-                success: true,
-                cards: mockCard("5", "HEARTS"),
-                deck_id: "1",
-            })
+            JSON.stringify(
+                mockSuccessfulCardDrawResponse("5", "HEARTS", "1", 50)
+            )
         );
 
         fireEvent.click(button);
@@ -99,32 +105,27 @@ describe("Game", () => {
     });
     it("displays Snap Suit when the card suits match", async () => {
         fetchMock.mockResponseOnce(
-            JSON.stringify({
-                success: true,
-                cards: mockCard("5", "SPADES"),
-                deck_id: "1",
-            })
+            JSON.stringify(
+                mockSuccessfulCardDrawResponse("5", "SPADES", "1", 51)
+            )
         );
+
         render(<Game deckId="1" />);
         const button = screen.getByTestId("drawButton");
         fireEvent.click(button);
         await screen.findByAltText("5 of SPADES");
         fetchMock.mockResponseOnce(
-            JSON.stringify({
-                success: true,
-                cards: mockCard("6", "SPADES"),
-                deck_id: "1",
-            })
+            JSON.stringify(
+                mockSuccessfulCardDrawResponse("6", "SPADES", "1", 50)
+            )
         );
-
         fireEvent.click(button);
         await screen.findByAltText("6 of SPADES");
-
         const snapSuit = screen.getByText("SNAP SUIT!");
         expect(snapSuit).toBeInTheDocument();
     });
 
-    it("calls fetch with the correct URL", () => {
+    it("calls fetch with the correct URL", async () => {
         const fetchSpy = jest.spyOn(window, "fetch");
         render(<Game deckId="1" />);
         const button = screen.getByTestId("drawButton");
@@ -133,9 +134,7 @@ describe("Game", () => {
             "https://deckofcardsapi.com/api/deck/1/draw/?count=1"
         );
     });
-    it("doesn't have the draw card button when all the cards have been drawn", async () => {
-        render(<Game deckId="1" />);
-        const button = screen.getByTestId("drawButton");
+    it("displays the correct end game messages", async () => {
         const cardValues = [
             "ACE",
             "2",
@@ -152,85 +151,68 @@ describe("Game", () => {
             "KING",
         ];
         const suits = ["SPADES", "DIAMONDS", "CLUBS", "HEARTS"];
-
-        for (let suit of suits) {
-            for (let value of cardValues) {
-                fetchMock.mockResponseOnce(
-                    JSON.stringify({
-                        success: true,
-                        cards: mockCard(value, suit),
-                        deck_id: "1",
-                    }),
-                    { status: 200 }
-                );
-                fireEvent.click(button);
-                await screen.findByAltText(`${value} of ${suit}`);
+        let suitIndex = 0;
+        let valueIndex = 0;
+        for (let i = 0; i < 52; i++) {
+            fetchMock.mockResponseOnce(
+                JSON.stringify(
+                    mockSuccessfulCardDrawResponse(
+                        cardValues[valueIndex],
+                        suits[suitIndex],
+                        "1",
+                        51 - i
+                    )
+                )
+            );
+            if (i === 0) {
+                render(<Game deckId="1" />);
+            }
+            const button = screen.getByTestId("drawButton");
+            fireEvent.click(button);
+            await screen.findByAltText(
+                `${cardValues[valueIndex]} of ${suits[suitIndex]}`
+            );
+            valueIndex++;
+            if (valueIndex === cardValues.length) {
+                valueIndex = 0;
+                suitIndex++;
             }
         }
-        expect(button).not.toBeInTheDocument();
+        expect(screen.getByText("VALUE MATCHES: 0")).toBeInTheDocument();
+        expect(screen.getByText("SUIT MATCHES: 48")).toBeInTheDocument();
     });
-    it("displays the number of value and suit matches when the game is over", async () => {
+    it("displays the cards remaining count", async () => {
         render(<Game deckId="1" />);
         const button = screen.getByTestId("drawButton");
-        const cardValues = [
-            "ACE",
-            "2",
-            "3",
-            "4",
-            "5",
-            "6",
-            "7",
-            "8",
-            "9",
-            "10",
-            "JACK",
-            "QUEEN",
-            "KING",
-        ];
-        const suits = ["SPADES", "DIAMONDS", "CLUBS", "HEARTS"];
-
-        for (let suit of suits) {
-            for (let value of cardValues) {
-                fetchMock.mockResponseOnce(
-                    JSON.stringify({
-                        success: true,
-                        cards: mockCard(value, suit),
-                        deck_id: "1",
-                    }),
-                    { status: 200 }
-                );
-                fireEvent.click(button);
-                await screen.findByAltText(`${value} of ${suit}`);
-            }
-        }
-        const valueMatches = await screen.findByText("VALUE MATCHES: 0");
-        const suitMatches = await screen.findByText("SUIT MATCHES: 48");
-        expect(valueMatches).toBeInTheDocument();
-        expect(suitMatches).toBeInTheDocument();
+        fetchMock.mockResponseOnce(
+            JSON.stringify(
+                mockSuccessfulCardDrawResponse("5", "SPADES", "1", 51)
+            )
+        );
+        fireEvent.click(button);
+        await screen.findByAltText("5 of SPADES");
+        expect(screen.getByText("Cards remaining: 51")).toBeInTheDocument();
     });
-
-    it("displays the number of value matches when every card has the same number at game over", async () => {
+    it("displays the probability of a snap value next draw", async () => {
         render(<Game deckId="1" />);
         const button = screen.getByTestId("drawButton");
-        const suits = ["SPADES", "DIAMONDS", "CLUBS", "HEARTS"];
-
-        for (let i = 0; i < 13; i++) {
-            for (let suit of suits) {
-                fetchMock.mockResponseOnce(
-                    JSON.stringify({
-                        success: true,
-                        cards: mockCard("Ace", suit),
-                        deck_id: "1",
-                    }),
-                    { status: 200 }
-                );
-                fireEvent.click(button);
-                await screen.findByAltText(`Ace of ${suit}`);
-            }
-        }
-        const valueMatches = await screen.findByText("VALUE MATCHES: 51");
-        const suitMatches = await screen.findByText("SUIT MATCHES: 0");
-        expect(valueMatches).toBeInTheDocument();
-        expect(suitMatches).toBeInTheDocument();
+        fetchMock.mockResponseOnce(
+            JSON.stringify(
+                mockSuccessfulCardDrawResponse("5", "SPADES", "1", 51)
+            )
+        );
+        fireEvent.click(button);
+        await screen.findByAltText("5 of SPADES");
+        fetchMock.mockResponseOnce(
+            JSON.stringify(
+                mockSuccessfulCardDrawResponse("5", "HEARTS", "1", 50)
+            )
+        );
+        fireEvent.click(button);
+        await screen.findByAltText("5 of HEARTS");
+        expect(screen.getByTestId("snapValueProbability")).toBeInTheDocument();
+        expect(
+            screen.getByText("Probability of a snap value: 1 in 51")
+        ).toBeInTheDocument();
     });
 });

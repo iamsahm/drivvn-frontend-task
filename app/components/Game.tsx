@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Card } from "./card";
+import SnapStatus from "./SnapStatus";
 import Table from "./Table";
+import ProbabilityStatus from "./ProbabilityStatus";
 import styled from "styled-components";
 import "./Game.css";
 
@@ -47,21 +49,13 @@ const GameContainer = styled.div`
     }
 `;
 
-const SnapStatusContainer = styled.div`
-    display: flex;
-    justify-content: space-evenly;
-    align-items: center;
-    width: 100%;
-    height: 10em;
-`;
-
 const ButtonAndResultsContainer = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: space-evenly;
     width: 100%;
-    height: 10em;
+    height: 30em;
 `;
 
 const Game: React.FC<GameProps> = ({ deckId }) => {
@@ -71,27 +65,34 @@ const Game: React.FC<GameProps> = ({ deckId }) => {
     const [snapSuit, setSnapSuit] = useState<boolean>(false);
     const [valueSnapCount, setValueSnapCount] = useState<number>(0);
     const [suitSnapCount, setSuitSnapCount] = useState<number>(0);
-    const [cardsDrawn, setCardsDrawn] = useState<number>(0);
+    const [cardsDrawn, setCardsDrawn] = useState<Card[]>([]);
     const [gameOver, setGameOver] = useState<boolean>(false);
+    const [isFetching, setIsFetching] = useState<boolean>(false);
 
     async function drawCard(): Promise<void> {
+        setIsFetching(true);
         try {
             const response = await fetch(
                 `https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=1`
             );
             const data = await response.json();
             if (data.success) {
-                const newCardsDrawn = cardsDrawn + 1;
-                setCardsDrawn(newCardsDrawn);
-                setGameOver(newCardsDrawn === 52);
+                const nextCard = data.cards[0];
+                setCardsDrawn((cardsDrawn) => [...cardsDrawn, nextCard]);
+                setGameOver(cardsDrawn.length + 1 === 52);
+                setOldCard(newCard);
+                setNewCard(gameOver ? placeHolderCard : nextCard);
+                setSnapValue(isSnapValue(newCard, nextCard));
+                setSnapSuit(isSnapSuit(newCard, nextCard));
+            } else {
+                throw new Error(
+                    "There's been an error, please refresh the page and try again."
+                );
             }
-            const nextCard = data.cards[0];
-            setOldCard(newCard);
-            setNewCard(gameOver ? placeHolderCard : nextCard);
-            setSnapValue(isSnapValue(newCard, nextCard));
-            setSnapSuit(isSnapSuit(newCard, nextCard));
         } catch (error) {
             console.error("Error:", error);
+        } finally {
+            setIsFetching(false);
         }
     }
 
@@ -111,18 +112,16 @@ const Game: React.FC<GameProps> = ({ deckId }) => {
 
     return (
         <GameContainer data-testid="game" className="game">
-            <SnapStatusContainer
-                data-testid="snapStatus"
-                className="snapStatus"
-            >
-                {snapValue && <p>SNAP VALUE!</p>}
-                {snapSuit && <p>SNAP SUIT!</p>}
-            </SnapStatusContainer>
+            <SnapStatus snapValue={snapValue} snapSuit={snapSuit} />
             <Table leftCard={oldCard} rightCard={newCard} />
 
             <ButtonAndResultsContainer>
                 {!gameOver ? (
-                    <button data-testid="drawButton" onClick={drawCard}>
+                    <button
+                        data-testid="drawButton"
+                        onClick={drawCard}
+                        disabled={isFetching}
+                    >
                         Draw card
                     </button>
                 ) : (
@@ -131,6 +130,8 @@ const Game: React.FC<GameProps> = ({ deckId }) => {
                         <p>SUIT MATCHES: {suitSnapCount}</p>
                     </>
                 )}
+                <p>Cards remaining: {52 - cardsDrawn.length}</p>
+                <ProbabilityStatus cardsDrawn={cardsDrawn} />
             </ButtonAndResultsContainer>
         </GameContainer>
     );
