@@ -151,8 +151,11 @@ add cypress, make it click everything and see that the things are there/not ther
 ## Optional Requirements
 
 -   A counter, displaying the current card number (or how many cards are left) - e.g. `Card 12 of 52` or `29 cards remaining`
+<!-- simple counter, could use the return from the API or do a count internal to the component -->
 -   The probability that the next card drawn will either be a value or suit match (this requires keeping track of what cards have already been drawn)
+<!-- basic maths, put it in it's own component, TDD it -->
 -   Some animation and/or sound effects
+<!-- not sure how to do this, look into it -->
 
 ## Submission
 
@@ -164,3 +167,12 @@ Here's what you'll need to send us:
 -   You may also send us a link to a location hosting your code (for example, Netlify)
 
 **The task should take around 2-3 hours.**
+
+## Additional improvements
+
+-   The draw card button should be disabled while the fetch request is in progress to avoid multiple requests being made at once.
+<!-- -   add a loading state to the button, disable it while the fetch request is in progress -->
+-   Add CI using NX, Dave mentioned it was used at Drivvn
+<!-- -   look into NX, it's overkill for this task but would be interesting to learn -->
+-   Find a way to deploy the extension branch separately?
+<!-- -   Vercel probably has a solution for this -->

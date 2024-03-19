@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import fetchMock from "jest-fetch-mock";
 import Game from "../app/components/Game";
 
@@ -193,26 +193,9 @@ describe("Game", () => {
         await screen.findByAltText("5 of SPADES");
         expect(screen.getByText("Cards remaining: 51")).toBeInTheDocument();
     });
-    it("displays the probability of a snap value next draw", async () => {
+    it("renders the ProbabilityStatus component", () => {
         render(<Game deckId="1" />);
-        const button = screen.getByTestId("drawButton");
-        fetchMock.mockResponseOnce(
-            JSON.stringify(
-                mockSuccessfulCardDrawResponse("5", "SPADES", "1", 51)
-            )
-        );
-        fireEvent.click(button);
-        await screen.findByAltText("5 of SPADES");
-        fetchMock.mockResponseOnce(
-            JSON.stringify(
-                mockSuccessfulCardDrawResponse("5", "HEARTS", "1", 50)
-            )
-        );
-        fireEvent.click(button);
-        await screen.findByAltText("5 of HEARTS");
-        expect(screen.getByTestId("snapValueProbability")).toBeInTheDocument();
-        expect(
-            screen.getByText("Probability of a snap value: 1 in 51")
-        ).toBeInTheDocument();
+        const probabilityStatus = screen.getByTestId("probabilityStatus");
+        expect(probabilityStatus).toBeInTheDocument();
     });
 });
