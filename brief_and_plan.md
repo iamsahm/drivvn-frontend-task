@@ -132,7 +132,11 @@ Turns out the API returns a status:false if you try to get a new card when the d
 
 ... this won't completely fufil the brief because it would require drawCard to be pressed once more after 52 draws. I should count the success returns from the data and set gameOver to true when it reaches 52. I could also make the fetch request an additional time after 52 draws to make sure the success:false is returned and throw an error if it doesn't
 
-make an isGameOver variable and set it in the drawcard function-->
+make an isGameOver variable and set it in the drawcard function
+
+The game component should have updates in a useEffect so that the state is updated after the drawCard function is called. Put the newCard in the dependency array so that the game component updates when the newCard is changed.
+
+-->
 
 -   A suite of suitable tests should be created for these requirements
 <!--
